@@ -1,27 +1,26 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"image/color"
-	"image/png"
-	"log"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/iFaceless/godub"
-	"github.com/iFaceless/godub/converter"
-	"github.com/xigh/go-waveform"
-	"github.com/xigh/go-wavreader"
 )
 
-// Split an mp3 into multiple segments
-// mp3File: The mp3 file to split
-// segmentTime: The time in seconds to split the mp3 (default is 60 but can be overriden)
-// Returns object with the segments and count
+/*
+Split an mp3 into multiple segments.
+
+Parameters:
+	mp3File: The path to the mp3 file to split
+	segmentTime: Segment length in seconds (default is 60)
+	uuid: The uuid of the request
+
+Returns:
+	error: An error if the operation fails
+*/
 func splitMp3(mp3File string, segmentTime int, uuid string) error {
 	if segmentTime == 0 {
 		segmentTime = 60
@@ -35,6 +34,16 @@ func splitMp3(mp3File string, segmentTime int, uuid string) error {
 	return nil
 }
 
+/*
+Get all files in a directory.
+
+Parameters:
+	directory: The directory to get the files from
+
+Returns:
+	[]string: A list of file names
+	error: An error if the operation fails
+*/
 func getFilesInDirectory(directory string) ([]string, error) {
 	files, err := os.ReadDir(directory)
 	if err != nil {
@@ -49,6 +58,15 @@ func getFilesInDirectory(directory string) ([]string, error) {
 	return fileNames, nil
 }
 
+/*
+Convert all mp3 files in a directory to waveform images.
+
+Parameters:
+	uuid: The uuid of the request
+
+Returns:
+	error: An error if the operation fails
+*/
 func convertAllMp3ToWaveformImages(uuid string) error {
 	files, err := getFilesInDirectory("output/" + uuid + "/audio")
 	if err != nil {
@@ -87,85 +105,9 @@ func convertAllMp3ToWaveformImages(uuid string) error {
 	return nil
 }
 
-func convertMp3ToWav(mp3File string) string {
-	filePath := mp3File
-	toFilePath := strings.Replace(filePath, ".mp3", ".wav", -1)
-	w, _ := os.Create(toFilePath)
-
-	err := converter.NewConverter(w).
-		WithBitRate(64000).
-		WithDstFormat("wav").
-		Convert(filePath)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return toFilePath
-}
-
-func wavToWaveform(wavFile string) error {
-	fmt.Println("wavToWaveform", wavFile)
-
-	segment, _ := godub.NewLoader().Load(wavFile)
-	fmt.Println(segment)
-
-	r, err := os.Open(wavFile)
-	if err != nil {
-		return err
-	}
-	defer r.Close()
-
-	w0, err := wavreader.New(r)
-	if err != nil {
-       	return err
-	}
-
-    margin := flag.Int("margin", 0, "margin")
-
-    duration := w0.Duration().Seconds()
-    fmt.Println("Duration:", duration)
-
-    width := int(duration * 10)
-    height := 50
-
-	img := waveform.MinMax(w0, &waveform.Options{
-		Width:   width,
-		Height:  height,
-		Zoom:    1,
-		Half:    false,
-		MarginL: *margin,
-		MarginR: *margin,
-		MarginT: *margin,
-		MarginB: *margin,
-		Front: &color.NRGBA{
-			R: 255,
-			G: 128,
-			B: 255,
-			A: 150,
-		},
-		Back: &color.NRGBA{
-			A: 0,
-		},
-	})
-
-	// Generate a uuid for the file name
-	uuid := uuid.NewString()
-
-	w, err := os.Create("output/"+uuid+".png")
-	if err != nil {
-		return err
-	}
-	defer w.Close()
-
-	err = png.Encode(w, img)
-	if err != nil {
-		return err
-    }
-    return nil
-}
-
 func main() {
 	uuid := uuid.NewString()
+
 	// Create the output directory
 	os.MkdirAll("output/"+uuid, os.ModePerm)
 	os.MkdirAll("output/"+uuid+"/audio", os.ModePerm)
@@ -182,17 +124,4 @@ func main() {
 		fmt.Println("Error:", err)
 		return
 	}
-
-	/*wav := convertMp3ToWav("audio/15min.mp3")
-	err := wavToWaveform(wav) // Capture the error
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}*/
-
-	// err := wavToWaveform("audio/Half_Day.wav") // Capture the error
-	// if err != nil {
-	//	fmt.Println("Error:", err)
-	//	return
-	// }
 }
