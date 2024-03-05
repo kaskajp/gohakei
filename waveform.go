@@ -94,7 +94,7 @@ func convertAllMp3ToWaveformImages(uuid string) error {
 
 			width := duration * 100
 
-			cmd = exec.Command("audiowaveform", "-i", "output/"+uuid+"/audio/"+file, "-o", "output/"+uuid+"/images/"+fileName, "--no-axis-labels", "--pixels-per-second", "100", "--width", fmt.Sprint(width), "--background-color", "00000000", "--waveform-color", "FFFFFFFF", "--height", "80")
+			cmd = exec.Command("audiowaveform", "-i", "output/"+uuid+"/audio/"+file, "-o", "output/"+uuid+"/images/"+fileName, "--no-axis-labels", "--pixels-per-second", "100", "--width", fmt.Sprint(width), "--background-color", "00000000", "--waveform-color", "999FAC", "--height", "80")
 			err = cmd.Run()
 			if err != nil {
 				return err
@@ -113,7 +113,7 @@ func main() {
 	os.MkdirAll("output/"+uuid+"/audio", os.ModePerm)
 	os.MkdirAll("output/"+uuid+"/images", os.ModePerm)
 
-	err := splitMp3("audio/15min.mp3", 60, uuid)
+	err := splitMp3("audio/long2.mp3", 60, uuid)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
